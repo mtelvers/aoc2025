@@ -14,10 +14,10 @@ I decided right away to use integer comparison rather than converting numbers to
 
 ## Part 2
 
-The problem is extended to allow any even chunking. Thus, `824824824` is now valid as it has three chunks of 3 digits. Given the maximum length of a 64-bit integer is 20 digits, we only need the factors of the numbers 1 to 20, which could be entered as a static list. I decided to calculate these in code using a simple division test up to the square root of the number. I should memoise these results to avoid repeated recalculation. Once I had a list of factors, I folded over the list, testing each with a recursive function to verify that each chunk was equal.
+The problem is extended to allow any equal chunking. Thus, `824824824` is now valid as it has three chunks of 3 digits. Given the maximum length of a 64-bit integer is 20 digits, we only need the factors of the numbers 1 to 20, which could be entered as a static list. I decided to calculate these in code using a simple division test up to the square root of the number. I should memoise these results to avoid repeated recalculation. Once I had a list of factors, I folded over the list, testing each with a recursive function to verify that each chunk was equal.
 
 ```ocaml
-let base = pow 10 f in
+let base = pow 10 factor in
 let modulo = x mod base in
 
 let rec loop v =

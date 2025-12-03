@@ -4,23 +4,36 @@ let input =
 let banks =
   List.map
     (fun line ->
-      List.init (String.length line) (fun i ->
+      Array.init (String.length line) (fun i ->
           String.get line i |> String.make 1 |> int_of_string))
     input
 
-let part1 =
+let calc len =
   List.fold_left
     (fun acc bank ->
-      let rec loop max_left max_right lst =
-        match lst with
-        | l :: r :: tl ->
-            if l > max_left then loop l r (r :: tl)
-            else if r > max_right then loop max_left r (r :: tl)
-            else loop max_left max_right (r :: tl)
-        | _ -> (max_left, max_right)
-      in
-      let l, r = loop 0 0 bank in
-      acc + (10 * l) + r)
+      let () = Array.iter (Printf.printf "%i") bank in
+      let () = Printf.printf "\n" in
+      (List.init len (fun i -> i + 1)
+      |> List.rev
+      |> List.fold_left_map
+           (fun acc size ->
+             let chunk =
+               Array.sub bank acc (Array.length bank - size - acc + 1)
+             in
+             let () = Array.iter (Printf.printf "%i") chunk in
+             let _, i =
+               Array.fold_left
+                 (fun (i, max_i) x ->
+                   if x > chunk.(max_i) then (i + 1, i) else (i + 1, max_i))
+                 (0, 0) chunk
+             in
+             let () = Printf.printf " -> i=%i [i]=%i\n" i chunk.(i) in
+             (i + acc + 1, chunk.(i)))
+           0
+      |> snd
+      |> List.fold_left (fun acc x -> (acc * 10) + x) 0)
+      + acc)
     0 banks
 
-let () = Printf.printf "part 1: %i\n" part1
+let () = Printf.printf "part 1: %i\n" (calc 2)
+let () = Printf.printf "part 2: %i\n" (calc 12)

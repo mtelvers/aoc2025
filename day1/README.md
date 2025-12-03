@@ -1,4 +1,4 @@
-# Day 1
+# Day 1 - Secret Entrance
 
 A dial points to 50. Follow the sequence of turns to see how many times it lands on zero. The only gotcha here was that the real input had values > 100.
 
