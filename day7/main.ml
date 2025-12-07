@@ -17,19 +17,6 @@ let manifold =
   |> List.flatten |> CoordMap.of_list
 
 let beams = CoordMap.filter (fun _ ch -> ch = 'S') manifold
-
-let print x b =
-  let _ =
-    CoordMap.fold
-      (fun p c lasty ->
-        if p.y <> lasty then Printf.printf "\n";
-        let c = match CoordMap.find_opt p b with Some c -> c | None -> c in
-        Printf.printf "%c" c;
-        p.y)
-      x 0
-  in
-  Printf.printf "\n"
-
 let count = ref 0
 
 let rec flow beams =
@@ -47,11 +34,30 @@ let rec flow beams =
         | _ -> acc)
       beams CoordMap.empty
   in
-  match CoordMap.is_empty beams with
-  | true -> ()
-  | false ->
-      let () = print manifold beams in
-      flow beams
+  match CoordMap.is_empty beams with true -> () | false -> flow beams
 
 let () = flow beams
 let () = Printf.printf "part 1: %i\n" !count
+let memo = Hashtbl.create 1000
+
+let rec dfs b =
+  match Hashtbl.find_opt memo b with
+  | Some v -> v
+  | None -> (
+      let t = { b with y = b.y + 1 } in
+      CoordMap.find_opt t manifold |> function
+      | Some '.' ->
+          let r = dfs t in
+          Hashtbl.add memo t r;
+          r
+      | Some '^' ->
+          let r = dfs { t with x = t.x + 1 } + dfs { t with x = t.x - 1 } in
+          Hashtbl.add memo t r;
+          r
+      | _ -> 1)
+
+let start, _ =
+  CoordMap.filter (fun _ ch -> ch = 'S') manifold |> CoordMap.choose
+
+let part2 = dfs start
+let () = Printf.printf "part 2: %i\n" part2
