@@ -15,6 +15,8 @@ let junctions =
              }
          | _ -> assert false)
 
+let njunctions = List.length junctions
+
 let distance v1 v2 =
   Float.sqrt
     (Float.pow (v2.x -. v1.x) 2.
@@ -29,60 +31,44 @@ let rec calc = function
 
 let sorted = calc junctions |> List.sort (fun (_, d1) (_, d2) -> compare d1 d2)
 
-let () =
-  List.iter
-    (fun ((v1, v2), d) ->
-      Printf.printf "(%.0f,%.0f,%.0f) -> (%.0f,%.0f,%.0f) = %.2f\n" v1.x v1.y
-        v1.z v2.x v2.y v2.z d)
-    sorted
-
-module VectorSet = Set.Make (struct
+module Network = Set.Make (struct
   type t = vector
 
   let compare = compare
 end)
 
-module VectorSetSet = Set.Make (VectorSet)
-
-(*
-let print x =
-        Printf.printf "=====\n";
-  VectorSetSet.iter
-    (fun vs ->
-      VectorSet.iter (fun v -> Printf.printf "(%.0f,%.0f,%.0f)," v.x v.y v.z) vs;
-      Printf.printf "\n") x;
-        Printf.printf "=====\n"
-        *)
+module NetworkSet = Set.Make (Network)
 
 let rec take n lst =
   match lst with
   | [] -> []
   | x :: xs -> if n <= 0 then [] else x :: take (n - 1) xs
 
-let r =
-  sorted |> take 1000
-  |> List.fold_left
-       (fun acc ((v1, v2), _) ->
-         (*     print acc; *)
-         let s1, s2 =
-           VectorSetSet.partition
-             (fun vs -> VectorSet.mem v1 vs || VectorSet.mem v2 vs)
-             acc
-         in
-         VectorSetSet.singleton
-           (match VectorSetSet.cardinal s1 with
-           | 0 -> VectorSet.(empty |> add v1 |> add v2)
-           | 1 -> VectorSetSet.choose s1 |> VectorSet.add v1 |> VectorSet.add v2
-           | 2 ->
-               VectorSetSet.fold
-                 (fun vs acc -> VectorSet.union acc vs)
-                 s1 VectorSet.empty
-           | _ -> assert false)
-         |> VectorSetSet.union s2)
-       VectorSetSet.empty
+let join v1 v2 acc =
+  let s1, s2 =
+    NetworkSet.partition (fun vs -> Network.mem v1 vs || Network.mem v2 vs) acc
+  in
+  NetworkSet.singleton
+    (match NetworkSet.cardinal s1 with
+    | 0 -> Network.(singleton v1 |> add v2)
+    | 1 -> NetworkSet.choose s1 |> Network.add v1 |> Network.add v2
+    | 2 -> NetworkSet.fold (fun vs acc -> Network.union acc vs) s1 Network.empty
+    | _ -> assert false)
+  |> NetworkSet.union s2
 
 let () =
-  VectorSetSet.fold (fun vs acc -> VectorSet.cardinal vs :: acc) r []
+  sorted |> take 10
+  |> List.fold_left (fun acc ((v1, v2), _) -> join v1 v2 acc) NetworkSet.empty
+  |> fun vss ->
+  NetworkSet.fold (fun vs acc -> Network.cardinal vs :: acc) vss []
   |> List.sort compare |> List.rev |> List.take 3 |> List.fold_left Int.mul 1
   |> Printf.printf "part 1: %i\n"
 
+let rec loop acc = function
+  | ((v1, v2), _) :: tl ->
+      let acc = join v1 v2 acc in
+      let size = Network.cardinal (NetworkSet.choose acc) in
+      if size = njunctions then v1.x *. v2.x else loop acc tl
+  | _ -> assert false
+
+let () = loop NetworkSet.empty sorted |> Printf.printf "part 2: %.0f\n"
