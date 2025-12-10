@@ -1,0 +1,4 @@
+(executable
+ (public_name day10)
+ (libraries lp lp-glpk)
+ (name main))
